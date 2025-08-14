@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # FastAPI Application
+  workout-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://workout_user:workout_pass@postgres:5432/workout_db
+      - SECRET_KEY=your-super-secret-key-change-in-production
+      - JWT_SECRET_KEY=your-jwt-secret-key-change-in-production
+      - ENVIRONMENT=production
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./:/app
+    restart: unless-stopped
+    networks:
+      - workout-network
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=workout_db
+      - POSTGRES_USER=workout_user
+      - POSTGRES_PASSWORD=workout_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - workout-network
+    restart: unless-stopped
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - workout-network
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - workout-api
+    networks:
+      - workout-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  workout-network:
+    driver: bridge
