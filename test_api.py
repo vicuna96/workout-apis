@@ -18,14 +18,17 @@ TEST_DATABASE_URL = "sqlite:///./test_workout_tracker.db"
 test_engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
-def override_get_db():
-    try:
-        db = TestingSessionLocal()
-        yield db
-    finally:
-        db.close()
+@pytest.fixture(scope="function")
+def db_session():
+    connection = test_engine.connect()
+    transaction = connection.begin()
 
-app.dependency_overrides[get_db] = override_get_db
+    session = TestingSessionLocal(bind=connection)
+    yield session
+
+    session.close()
+    transaction.rollback()
+    connection.close()
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_database():
@@ -37,9 +40,19 @@ def setup_test_database():
     if os.path.exists("./test_workout_tracker.db"):
         os.remove("./test_workout_tracker.db")
 
-@pytest.fixture
-def client():
-    return TestClient(app)
+@pytest.fixture(scope="function")
+def client(db_session):
+    # Override get_db to always yield the same session for this test
+    def override_get_db():
+        try:
+            yield db_session
+        finally:
+            pass  # cleanup handled by fixture
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    with TestClient(app) as c:
+        yield c
 
 @pytest.fixture
 def test_user_data():
@@ -246,7 +259,7 @@ class TestWorkouts:
         data = response.json()
         assert "workout_sets" in data
         assert "total" in data
-        # assert data["total"] == 3
+        assert data["total"] == 3
         assert len(data["workout_sets"]) == 3
     
     def test_get_workout_sets_with_filters(self, authenticated_client):
@@ -641,6 +654,7 @@ if __name__ == "__main__":
         print("✓ Workout retrieval passed")
     else:
         print("✗ Workout retrieval failed")
+        print("✗ You may need to clear the db if the test was previously ran in the same environment.")
         exit(1)
     
     print("\n🎉 All basic integration tests passed!")
