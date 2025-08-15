@@ -66,11 +66,7 @@ def test_user_data():
 def authenticated_client(client, test_user_data):
     # Register and login user
     response = client.post("/api/auth/register", json=test_user_data)
-    if response.status_code == 400:
-        response = client.post("/api/auth/login", json=test_user_data)
-        assert response.status_code == 200
-    else:
-        assert response.status_code == 201
+    assert response.status_code == 201
 
     token = response.json()["access_token"]
     

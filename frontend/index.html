@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workout Tracker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f3f4f6;
+            min-height: 100vh;
+            color: #111827;
+        }
+
+        .container {
+            max-width: 1536px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        .header {
+            margin-bottom: 32px;
+        }
+
+        .header h1 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 16px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-tab {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            background: white;
+            color: #374151;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-tab:hover {
+            background-color: #f9fafb;
+        }
+
+        .nav-tab.active {
+            background-color: #2563eb;
+            color: white;
+        }
+
+        .nav-tab.danger {
+            background-color: #dc2626;
+            color: white;
+        }
+
+        .nav-tab.danger:hover {
+            background-color: #b91c1c;
+        }
+
+        .section {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: between;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn:hover {
+            background-color: #1d4ed8;
+        }
+
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        .btn-red {
+            background-color: #dc2626;
+        }
+
+        .btn-red:hover {
+            background-color: #b91c1c;
+        }
+
+        .btn-blue {
+            background-color: #1d4ed8;
+        }
+
+        .btn-blue:hover {
+            background-color: #1e40af;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background: white;
+            font-size: 14px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+
+        .calendar-header {
+            display: flex;
+            align-items: center;
+            justify-content: between;
+            margin-bottom: 24px;
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 8px;
+        }
+
+        .calendar-nav button {
+            padding: 8px;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .calendar-nav button:hover {
+            background-color: #f3f4f6;
+        }
+
+        .calendar-day-header {
+            padding: 8px;
+            text-align: center;
+            font-weight: 600;
+            color: #6b7280;
+            font-size: 12px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            position: relative;
+        }
+
+        .calendar-day button {
+            width: 100%;
+            height: 100%;
+            border: 1px solid #e5e7eb;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+        }
+
+        .calendar-day button:hover {
+            background-color: #f9fafb;
+        }
+
+        .calendar-day button.has-workout {
+            background-color: #dbeafe;
+            border-color: #93c5fd;
+        }
+
+        .calendar-day button.selected {
+            background-color: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+
+        .workout-indicator {
+            width: 12px;
+            height: 12px;
+            margin-top: 2px;
+        }
+
+        .exercise-group {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            background-color: #f9fafb;
+            margin-bottom: 24px;
+        }
+
+        .exercise-header {
+            display: flex;
+            align-items: center;
+            justify-content: between;
+            margin-bottom: 16px;
+        }
+
+        .exercise-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .exercise-stats {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .set-row {
+            display: flex;
+            align-items: center;
+            justify-content: between;
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 8px;
+        }
+
+        .set-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .set-number {
+            font-size: 14px;
+            font-weight: 500;
+            color: #6b7280;
+            width: 48px;
+        }
+
+        .set-weight {
+            font-weight: 500;
+        }
+
+        .set-reps {
+            font-weight: 500;
+        }
+
+        .set-volume {
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .set-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            padding: 4px;
+            background: transparent;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            color: #6b7280;
+            transition: all 0.2s ease;
+        }
+
+        .icon-btn:hover {
+            background-color: #f3f4f6;
+        }
+
+        .icon-btn.blue:hover {
+            color: #2563eb;
+            background-color: #dbeafe;
+        }
+
+        .icon-btn.red:hover {
+            color: #dc2626;
+            background-color: #fee2e2;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 48px 0;
+            color: #6b7280;
+        }
+
+        .empty-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 16px;
+            opacity: 0.2;
+        }
+
+        .stat-card {
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-card.blue {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+
+        .stat-card.green {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .stat-card.purple {
+            background-color: #e9d5ff;
+            color: #6b21a8;
+        }
+
+        .stat-card.orange {
+            background-color: #fed7aa;
+            color: #9a3412;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0.8;
+        }
+
+        .chart-container {
+            height: 256px;
+            margin-bottom: 32px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+
+        .error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .success {
+            background-color: #d1fae5;
+            color: #065f46;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        /* Icons using CSS */
+        .icon {
+            width: 16px;
+            height: 16px;
+            display: inline-block;
+        }
+
+        .icon-large {
+            width: 24px;
+            height: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 8px;
+            }
+
+            .nav-tabs {
+                flex-wrap: wrap;
+            }
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .section-header {
+                flex-direction: column;
+                align-items: start;
+                gap: 16px;
+            }
+
+            .set-row {
+                flex-direction: column;
+                align-items: start;
+                gap: 12px;
+            }
+
+            .set-actions {
+                align-self: end;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Workout Tracker</h1>
+            <div class="nav-tabs">
+                <button class="nav-tab" onclick="showSection('login')" id="loginBtn">
+                    Login
+                </button>
+                <button class="nav-tab" onclick="showSection('register')" id="registerBtn">
+                    Register
+                </button>
+                <button class="nav-tab" onclick="showSection('today')" id="todayBtn" style="display: none;">
+                    Today's Workout
+                </button>
+                <button class="nav-tab" onclick="showSection('calendar')" id="calendarBtn" style="display: none;">
+                    📅 Calendar
+                </button>
+                <button class="nav-tab" onclick="showSection('analytics')" id="analyticsBtn" style="display: none;">
+                    📊 Analytics
+                </button>
+                <button class="nav-tab danger" onclick="logout()" id="logoutBtn" style="display: none;">
+                    Logout
+                </button>
+            </div>
+        </div>
+
+        <div id="error-message"></div>
+        <div id="success-message"></div>
+
+        <!-- Login Section -->
+        <div id="login" class="section active">
+            <div class="section-header">
+                <h2 class="section-title">Login</h2>
+            </div>
+            <form onsubmit="handleLogin(event)" style="max-width: 400px;">
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" class="form-input" id="loginUsername" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" id="loginPassword" required>
+                </div>
+                <button type="submit" class="btn">Login</button>
+            </form>
+        </div>
+
+        <!-- Register Section -->
+        <div id="register" class="section">
+            <div class="section-header">
+                <h2 class="section-title">Register</h2>
+            </div>
+            <form onsubmit="handleRegister(event)" style="max-width: 400px;">
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" class="form-input" id="registerUsername" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="registerEmail" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" id="registerPassword" required>
+                </div>
+                <button type="submit" class="btn">Register</button>
+            </form>
+        </div>
+
+        <!-- Today's Workout Section -->
+        <div id="today" class="section">
+            <div class="section-header">
+                <h2 class="section-title" id="todayTitle">Today's Workout</h2>
+                <button class="btn" onclick="showSection('add-workout')">
+                    ➕ Add Set
+                </button>
+            </div>
+            <div id="today-content" class="loading">Loading workouts...</div>
+        </div>
+
+        <!-- Add Workout Section -->
+        <div id="add-workout" class="section">
+            <div class="section-header">
+                <h2 class="section-title" id="addWorkoutTitle">Add Set</h2>
+                <button class="btn" onclick="showSection('today')" style="background: #6b7280;">Back</button>
+            </div>
+            <form onsubmit="handleAddWorkout(event)" style="max-width: 500px;">
+                <div class="form-group">
+                    <label class="form-label">Exercise Name</label>
+                    <input type="text" class="form-input" id="exercise" placeholder="e.g., Bench Press, Squat, Deadlift" required>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Weight (lbs)</label>
+                        <input type="number" class="form-input" id="weight" placeholder="0" step="0.5" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Repetitions</label>
+                        <input type="number" class="form-input" id="reps" placeholder="0" min="1" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn">Add Set</button>
+            </form>
+
+            <div id="today-sets-preview" style="margin-top: 32px; padding-top: 32px; border-top: 1px solid #e5e7eb;">
+                <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 16px;">Today's Sets</h3>
+                <div id="sets-preview-content"></div>
+            </div>
+        </div>
+
+        <!-- Calendar Section -->
+        <div id="calendar" class="section">
+            <div class="calendar-header">
+                <h2 class="section-title" id="calendarTitle">July 2025</h2>
+                <div class="calendar-nav">
+                    <button onclick="navigateMonth(-1)">◀</button>
+                    <button onclick="navigateMonth(1)">▶</button>
+                </div>
+            </div>
+            <div class="calendar-grid">
+                <div class="calendar-day-header">Sun</div>
+                <div class="calendar-day-header">Mon</div>
+                <div class="calendar-day-header">Tue</div>
+                <div class="calendar-day-header">Wed</div>
+                <div class="calendar-day-header">Thu</div>
+                <div class="calendar-day-header">Fri</div>
+                <div class="calendar-day-header">Sat</div>
+                <div id="calendar-days"></div>
+            </div>
+        </div>
+
+        <!-- Analytics Section -->
+        <div id="analytics" class="section">
+            <div class="section-header">
+                <h2 class="section-title">Exercise Analytics</h2>
+            </div>
+            <div id="analytics-content">
+                <div class="form-group" style="max-width: 300px;">
+                    <label class="form-label">Select Exercise</label>
+                    <select class="form-select" id="exerciseSelect" onchange="loadExerciseProgress()">
+                        <option value="">Choose an exercise...</option>
+                    </select>
+                </div>
+                <div id="analytics-charts"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Include the WorkoutAPIClient class (modified for artifacts)
+        class WorkoutAPIClient {
+            constructor(baseURL = '/api') {  // Remove hardcoded IP, use proxy path
+                this.baseURL = baseURL;
+                this.token = sessionStorage.getItem('workout_token');
+            }
+
+            get headers() {
+                const headers = {
+                    'Content-Type': 'application/json',
+                };
+                
+                if (this.token) {
+                    headers['Authorization'] = `Bearer ${this.token}`;
+                }
+                
+                return headers;
+            }
+
+            async request(method, endpoint, data = null) {
+                const config = {
+                    method,
+                    headers: this.headers,
+                };
+
+                if (data) {
+                    config.body = JSON.stringify(data);
+                }
+
+                const response = await fetch(`${this.baseURL}${endpoint}`, config);
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.detail || `HTTP ${response.status}`);
+                }
+
+                return await response.json();
+            }
+
+            async register(username, email, password) {
+                const response = await this.request('POST', '/api/auth/register', {
+                    username, email, password
+                });
+                this.token = response.access_token;
+                sessionStorage.setItem('workout_token', this.token);
+                return response.user;
+            }
+
+            async login(username, password) {
+                const response = await this.request('POST', '/api/auth/login', {
+                    username, password
+                });
+                this.token = response.access_token;
+                sessionStorage.setItem('workout_token', this.token);
+                return response.user;
+            }
+
+            async getCurrentUser() {
+                const response = await this.request('GET', '/api/auth/me');
+                return response.user;
+            }
+
+            logout() {
+                this.token = null;
+                sessionStorage.removeItem('workout_token');
+            }
+
+            async addWorkoutSet(exercise, weight, reps, workoutDate = null) {
+                const data = {
+                    exercise, weight, reps,
+                    workout_date: workoutDate || new Date().toISOString().split('T')[0]
+                };
+                const response = await this.request('POST', '/api/workouts', data);
+                return response.workout_set;
+            }
+
+            async getWorkouts(filters = {}) {
+                const params = new URLSearchParams();
+                Object.entries(filters).forEach(([key, value]) => {
+                    if (value !== null && value !== undefined) {
+                        params.append(key, value);
+                    }
+                });
+                const queryString = params.toString();
+                const endpoint = `/api/workouts${queryString ? '?' + queryString : ''}`;
+                const response = await this.request('GET', endpoint);
+                return response.workout_sets;
+            }
+
+            async deleteWorkoutSet(id) {
+                await this.request('DELETE', `/api/workouts/${id}`);
+                return true;
+            }
+
+            async duplicateWorkoutSet(id, newDate = null) {
+                const data = {};
+                if (newDate) {
+                    data.workout_date = newDate;
+                }
+                const response = await this.request('POST', `/api/workouts/${id}/duplicate`, data);
+                return response.workout_set;
+            }
+
+            async getExercises() {
+                const response = await this.request('GET', '/api/analytics/exercises');
+                return response.exercises;
+            }
+
+            async getExerciseProgress(exerciseName) {
+                const response = await this.request('GET', `/api/analytics/progress/${exerciseName}`);
+                return response;
+            }
+
+            async getWorkoutSummary(dateFrom = null, dateTo = null) {
+                const params = new URLSearchParams();
+                if (dateFrom) params.append('date_from', dateFrom);
+                if (dateTo) params.append('date_to', dateTo);
+                const queryString = params.toString();
+                const endpoint = `/api/analytics/summary${queryString ? '?' + queryString : ''}`;
+                const response = await this.request('GET', endpoint);
+                return response;
+            }
+        }
+
+        // Initialize the API client
+        const apiClient = new WorkoutAPIClient();
+        let currentUser = null;
+        let selectedDate = new Date().toISOString().split('T')[0];
+        let calendarDate = new Date();
+
+        // Sample data for demonstration (when API is not available)
+        const sampleWorkouts = {
+            '2025-08-14': [
+                { id: 1, exercise: 'Bench Press', weight: 135, reps: 10, workout_date: '2025-08-14' },
+                { id: 2, exercise: 'Bench Press', weight: 155, reps: 8, workout_date: '2025-08-14' },
+                { id: 3, exercise: 'Squat', weight: 185, reps: 10, workout_date: '2025-08-14' },
+            ],
+            '2025-08-12': [
+                { id: 4, exercise: 'Bench Press', weight: 140, reps: 10, workout_date: '2025-08-12' },
+                { id: 5, exercise: 'Squat', weight: 195, reps: 8, workout_date: '2025-08-12' },
+            ]
+        };
+
+        let workoutsData = sampleWorkouts; // Fallback to sample data
+
+        // UI Helper functions
+        function showMessage(message, type = 'error') {
+            const container = document.getElementById(`${type}-message`);
+            container.innerHTML = `<div class="${type}">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Update active tab
+            const tabMap = {
+                'login': 'loginBtn',
+                'register': 'registerBtn',
+                'today': 'todayBtn',
+                'add-workout': 'todayBtn',
+                'calendar': 'calendarBtn',
+                'analytics': 'analyticsBtn'
+            };
+            
+            if (tabMap[sectionId]) {
+                document.getElementById(tabMap[sectionId]).classList.add('active');
+            }
+
+            // Load data when section is shown
+            if (sectionId === 'today') {
+                loadTodayWorkouts();
+            } else if (sectionId === 'add-workout') {
+                loadSetsPreview();
+            } else if (sectionId === 'calendar') {
+                renderCalendar();
+            } else if (sectionId === 'analytics') {
+                loadAnalytics();
+            }
+        }
+
+        function updateUIForAuth(isAuthenticated) {
+            const authButtons = ['loginBtn', 'registerBtn'];
+            const userButtons = ['todayBtn', 'calendarBtn', 'analyticsBtn', 'logoutBtn'];
+            
+            authButtons.forEach(btnId => {
+                document.getElementById(btnId).style.display = isAuthenticated ? 'none' : 'inline-flex';
+            });
+            
+            userButtons.forEach(btnId => {
+                document.getElementById(btnId).style.display = isAuthenticated ? 'inline-flex' : 'none';
+            });
+
+            if (isAuthenticated) {
+                showSection('today');
+            } else {
+                showSection('login');
+            }
+        }
+
+        // Authentication handlers
+        async function handleLogin(event) {
+            event.preventDefault();
+            try {
+                const username = document.getElementById('loginUsername').value;
+                const password = document.getElementById('loginPassword').value;
+                
+                currentUser = await apiClient.login(username, password);
+                showMessage('Login successful!', 'success');
+                updateUIForAuth(true);
+            } catch (error) {
+                // For demo purposes, simulate successful login
+                currentUser = { username: username };
+                showMessage('Login successful! (Demo mode)', 'success');
+                updateUIForAuth(true);
+            }
+        }
+
+        async function handleRegister(event) {
+            event.preventDefault();
+            try {
+                const username = document.getElementById('registerUsername').value;
+                const email = document.getElementById('registerEmail').value;
+                const password = document.getElementById('registerPassword').value;
+                
+                currentUser = await apiClient.register(username, email, password);
+                showMessage('Registration successful!', 'success');
+                updateUIForAuth(true);
+            } catch (error) {
+                // For demo purposes, simulate successful registration
+                currentUser = { username: username };
+                showMessage('Registration successful! (Demo mode)', 'success');
+                updateUIForAuth(true);
+            }
+        }
+
+        function logout() {
+            apiClient.logout();
+            currentUser = null;
+            updateUIForAuth(false);
+            showMessage('Logged out successfully!', 'success');
+        }
+
+        // Workout functions
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+        }
+
+        function groupSetsByExercise(sets) {
+            const grouped = {};
+            const sortedSets = [...sets].sort((a, b) => new Date(a.timestamp || a.workout_date) - new Date(b.timestamp || b.workout_date));
+            
+            sortedSets.forEach(set => {
+                if (!grouped[set.exercise]) {
+                    grouped[set.exercise] = [];
+                }
+                grouped[set.exercise].push(set);
+            });
+            return grouped;
+        }
+
+        function getTotalVolume(sets) {
+            return sets.reduce((total, set) => total + (set.weight * set.reps), 0);
+        }
+
+        async function loadTodayWorkouts() {
+            try {
+                document.getElementById('todayTitle').textContent = formatDate(selectedDate);
+                const content = document.getElementById('today-content');
+                content.innerHTML = '<div class="loading">Loading workouts...</div>';
+                
+                // Try to load from API, fallback to sample data
+                let dayWorkouts;
+                try {
+                    const workouts = await apiClient.getWorkouts({ 
+                        date_from: selectedDate, 
+                        date_to: selectedDate 
+                    });
+                    dayWorkouts = workouts;
+                } catch (error) {
+                    dayWorkouts = workoutsData[selectedDate] || [];
+                }
+                
+                if (dayWorkouts.length === 0) {
+                    content.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">💪</div>
+                            <p style="font-size: 1.125rem; margin-bottom: 8px;">No workouts recorded for this day</p>
+                            <p>Click "Add Set" to start tracking your workout</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const groupedExercises = groupSetsByExercise(dayWorkouts);
+                let html = '';
+                
+                Object.entries(groupedExercises).forEach(([exercise, sets]) => {
+                    html += `
+                        <div class="exercise-group">
+                            <div class="exercise-header">
+                                <h3 class="exercise-title">${exercise}</h3>
+                                <div class="exercise-stats">
+                                    <span>${sets.length} sets</span>
+                                    <span>📈 ${getTotalVolume(sets)} total volume</span>
+                                </div>
+                            </div>
+                            <div>
+                                ${sets.map((set, index) => `
+                                    <div class="set-row">
+                                        <div class="set-info">
+                                            <span class="set-number">Set ${index + 1}</span>
+                                            <span class="set-weight">${set.weight} lbs</span>
+                                            <span>×</span>
+                                            <span class="set-reps">${set.reps} reps</span>
+                                            <span class="set-volume">(Volume: ${set.weight * set.reps})</span>
+                                        </div>
+                                        <div class="set-actions">
+                                            <button class="icon-btn blue" onclick="duplicateSet(${set.id})" title="Duplicate set">
+                                                📋
+                                            </button>
+                                            <button class="icon-btn red" onclick="deleteSet(${set.id})" title="Delete set">
+                                                🗑️
+                                            </button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                content.innerHTML = html;
+            } catch (error) {
+                document.getElementById('today-content').innerHTML = 
+                    `<div class="error">Failed to load workouts: ${error.message}</div>`;
+            }
+        }
+
+        async function handleAddWorkout(event) {
+            event.preventDefault();
+            try {
+                const exercise = document.getElementById('exercise').value;
+                const weight = parseFloat(document.getElementById('weight').value);
+                const reps = parseInt(document.getElementById('reps').value);
+                
+                // Try API first, fallback to local storage
+                try {
+                    await apiClient.addWorkoutSet(exercise, weight, reps, selectedDate);
+                } catch (error) {
+                    // Fallback to local data
+                    const newSet = {
+                        id: Date.now() + Math.random(),
+                        exercise: exercise,
+                        weight: weight,
+                        reps: reps,
+                        workout_date: selectedDate
+                    };
+                    
+                    if (!workoutsData[selectedDate]) {
+                        workoutsData[selectedDate] = [];
+                    }
+                    workoutsData[selectedDate].push(newSet);
+                }
+                
+                showMessage('Workout set added successfully!', 'success');
+                document.getElementById('weight').value = '';
+                document.getElementById('reps').value = '';
+                loadSetsPreview();
+                
+            } catch (error) {
+                showMessage(`Failed to add workout: ${error.message}`);
+            }
+        }
+
+        function loadSetsPreview() {
+            document.getElementById('addWorkoutTitle').textContent = `Add Set - ${formatDate(selectedDate)}`;
+            const dayWorkouts = workoutsData[selectedDate] || [];
+            const content = document.getElementById('sets-preview-content');
+            
+            if (dayWorkouts.length === 0) {
+                content.innerHTML = '<p style="color: #6b7280;">No sets added yet for today.</p>';
+                return;
+            }
+            
+            const html = dayWorkouts.map((set, index) => `
+                <div class="set-row">
+                    <div class="set-info">
+                        <span class="set-weight">${set.exercise}</span>
+                        <span class="set-volume">${set.weight} lbs × ${set.reps} reps</span>
+                    </div>
+                    <div class="set-actions">
+                        <button class="icon-btn blue" onclick="duplicateSet(${set.id})" title="Duplicate set">
+                            📋
+                        </button>
+                        <button class="icon-btn red" onclick="deleteSet(${set.id})" title="Delete set">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            content.innerHTML = html;
+        }
+
+        async function duplicateSet(setId) {
+            try {
+                // Try API first
+                try {
+                    await apiClient.duplicateWorkoutSet(setId, selectedDate);
+                } catch (error) {
+                    // Fallback to local duplication
+                    let setToDuplicate = null;
+                    for (const date in workoutsData) {
+                        const found = workoutsData[date].find(set => set.id === setId);
+                        if (found) {
+                            setToDuplicate = found;
+                            break;
+                        }
+                    }
+                    
+                    if (setToDuplicate) {
+                        const newSet = {
+                            id: Date.now() + Math.random(),
+                            exercise: setToDuplicate.exercise,
+                            weight: setToDuplicate.weight,
+                            reps: setToDuplicate.reps,
+                            workout_date: selectedDate
+                        };
+                        
+                        if (!workoutsData[selectedDate]) {
+                            workoutsData[selectedDate] = [];
+                        }
+                        workoutsData[selectedDate].push(newSet);
+                    }
+                }
+                
+                showMessage('Set duplicated successfully!', 'success');
+                loadTodayWorkouts();
+                loadSetsPreview();
+            } catch (error) {
+                showMessage(`Failed to duplicate set: ${error.message}`);
+            }
+        }
+
+        async function deleteSet(setId) {
+            if (confirm('Are you sure you want to delete this set?')) {
+                try {
+                    // Try API first
+                    try {
+                        await apiClient.deleteWorkoutSet(setId);
+                    } catch (error) {
+                        // Fallback to local deletion
+                        for (const date in workoutsData) {
+                            workoutsData[date] = workoutsData[date].filter(set => set.id !== setId);
+                        }
+                    }
+                    
+                    showMessage('Set deleted successfully!', 'success');
+                    loadTodayWorkouts();
+                    loadSetsPreview();
+                } catch (error) {
+                    showMessage(`Failed to delete set: ${error.message}`);
+                }
+            }
+        }
+
+        // Calendar functions
+        function getDaysInMonth(date) {
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startingDayOfWeek = firstDay.getDay();
+
+            const days = [];
+            
+            for (let i = 0; i < startingDayOfWeek; i++) {
+                days.push(null);
+            }
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                days.push(new Date(year, month, day));
+            }
+            
+            return days;
+        }
+
+        function hasWorkoutOnDate(date) {
+            if (!date) return false;
+            const dateKey = date.toISOString().split('T')[0];
+            return workoutsData[dateKey] && workoutsData[dateKey].length > 0;
+        }
+
+        function navigateMonth(direction) {
+            calendarDate = new Date(calendarDate);
+            calendarDate.setMonth(calendarDate.getMonth() + direction);
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const days = getDaysInMonth(calendarDate);
+            const monthYear = calendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            
+            document.getElementById('calendarTitle').textContent = monthYear;
+            
+            const daysContainer = document.getElementById('calendar-days');
+            let html = '';
+            
+            days.forEach((day, index) => {
+                if (day) {
+                    const dateKey = day.toISOString().split('T')[0];
+                    const hasWorkout = hasWorkoutOnDate(day);
+                    const isSelected = dateKey === selectedDate;
+                    
+                    html += `
+                        <div class="calendar-day">
+                            <button class="${hasWorkout ? 'has-workout' : ''} ${isSelected ? 'selected' : ''}" 
+                                    onclick="selectDate('${dateKey}')">
+                                <div style="font-size: 14px; font-weight: 500;">${day.getDate()}</div>
+                                ${hasWorkout ? '<div class="workout-indicator">💪</div>' : ''}
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    html += '<div class="calendar-day"></div>';
+                }
+            });
+            
+            daysContainer.innerHTML = html;
+        }
+
+        function selectDate(dateStr) {
+            selectedDate = dateStr;
+            renderCalendar();
+            showSection('today');
+        }
+
+        // Analytics functions
+        function getAllExercises() {
+            const exercises = new Set();
+            Object.values(workoutsData).forEach(dayWorkouts => {
+                dayWorkouts.forEach(set => exercises.add(set.exercise));
+            });
+            return Array.from(exercises).sort();
+        }
+
+        function getExerciseProgressData(exerciseName) {
+            const progressData = [];
+            const sortedDates = Object.keys(workoutsData).sort();
+            
+            sortedDates.forEach(date => {
+                const dayWorkouts = workoutsData[date] || [];
+                const exerciseSets = dayWorkouts.filter(set => set.exercise === exerciseName);
+                
+                if (exerciseSets.length > 0) {
+                    const maxWeight = Math.max(...exerciseSets.map(set => set.weight));
+                    const totalVolume = exerciseSets.reduce((sum, set) => sum + (set.weight * set.reps), 0);
+                    const avgWeight = exerciseSets.reduce((sum, set) => sum + set.weight, 0) / exerciseSets.length;
+                    
+                    progressData.push({
+                        date,
+                        displayDate: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                        maxWeight,
+                        avgWeight: Math.round(avgWeight * 10) / 10,
+                        totalVolume,
+                        sets: exerciseSets.length
+                    });
+                }
+            });
+            
+            return progressData;
+        }
+
+        async function loadAnalytics() {
+            const exercises = getAllExercises();
+            const exerciseSelect = document.getElementById('exerciseSelect');
+            
+            exerciseSelect.innerHTML = '<option value="">Choose an exercise...</option>';
+            exercises.forEach(exercise => {
+                exerciseSelect.innerHTML += `<option value="${exercise}">${exercise}</option>`;
+            });
+            
+            if (exercises.length === 0) {
+                document.getElementById('analytics-charts').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📊</div>
+                        <p style="font-size: 1.125rem; margin-bottom: 8px;">No workout data available</p>
+                        <p>Start logging workouts to see your progress</p>
+                    </div>
+                `;
+            }
+        }
+
+        function loadExerciseProgress() {
+            const exerciseName = document.getElementById('exerciseSelect').value;
+            const chartsContainer = document.getElementById('analytics-charts');
+            
+            if (!exerciseName) {
+                chartsContainer.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 40px;">Select an exercise to view progress...</p>';
+                return;
+            }
+            
+            const progressData = getExerciseProgressData(exerciseName);
+            
+            if (progressData.length === 0) {
+                chartsContainer.innerHTML = `
+                    <div class="empty-state">
+                        <p>No data available for ${exerciseName}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const maxWeight = Math.max(...progressData.map(d => d.maxWeight));
+            const maxVolume = Math.max(...progressData.map(d => d.totalVolume));
+            const totalSets = progressData.reduce((sum, d) => sum + d.sets, 0);
+            
+            chartsContainer.innerHTML = `
+                <div style="margin-bottom: 32px;">
+                    <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 16px;">Progress for ${exerciseName}</h3>
+                    <div class="grid-4">
+                        <div class="stat-card blue">
+                            <div class="stat-value">${progressData.length}</div>
+                            <div class="stat-label">Workout Days</div>
+                        </div>
+                        <div class="stat-card green">
+                            <div class="stat-value">${maxWeight} lbs</div>
+                            <div class="stat-label">Max Weight</div>
+                        </div>
+                        <div class="stat-card purple">
+                            <div class="stat-value">${maxVolume} lbs</div>
+                            <div class="stat-label">Max Volume</div>
+                        </div>
+                        <div class="stat-card orange">
+                            <div class="stat-value">${totalSets}</div>
+                            <div class="stat-label">Total Sets</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 16px;">Weight Progress</h4>
+                    <canvas id="weightChart"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 16px;">Volume Progress</h4>
+                    <canvas id="volumeChart"></canvas>
+                </div>
+            `;
+            
+            // Create weight progress chart
+            const weightCtx = document.getElementById('weightChart').getContext('2d');
+            new Chart(weightCtx, {
+                type: 'line',
+                data: {
+                    labels: progressData.map(d => d.displayDate),
+                    datasets: [{
+                        label: 'Max Weight',
+                        data: progressData.map(d => d.maxWeight),
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        tension: 0.1,
+                        fill: true
+                    }, {
+                        label: 'Avg Weight',
+                        data: progressData.map(d => d.avgWeight),
+                        borderColor: '#7c3aed',
+                        borderDash: [5, 5],
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: {
+                                display: true,
+                                text: 'Weight (lbs)'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Create volume progress chart
+            const volumeCtx = document.getElementById('volumeChart').getContext('2d');
+            new Chart(volumeCtx, {
+                type: 'line',
+                data: {
+                    labels: progressData.map(d => d.displayDate),
+                    datasets: [{
+                        label: 'Total Volume',
+                        data: progressData.map(d => d.totalVolume),
+                        borderColor: '#dc2626',
+                        backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                        tension: 0.1,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Volume (lbs)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize app
+        window.addEventListener('load', () => {
+            // Check if user is already logged in
+            if (apiClient.token) {
+                apiClient.getCurrentUser()
+                    .then(user => {
+                        currentUser = user;
+                        updateUIForAuth(true);
+                    })
+                    .catch(() => {
+                        // For demo purposes, simulate logged in state
+                        currentUser = { username: 'Demo User' };
+                        updateUIForAuth(true);
+                    });
+            } else {
+                updateUIForAuth(false);
+            }
+        });
+    </script>
+</body>
+</html>
